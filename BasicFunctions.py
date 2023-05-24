@@ -95,35 +95,4 @@ def CalculateTauc2(Adhesive,sigc2,Coh_mat,Coh_Tri,Gss,BK_MM) :
     Adhesive.loc[Coh_Tri,'tauc'] = tauc2
     Adhesive.loc[Coh_Tri,'Ksh'] = Adhesive.loc[Coh_Tri,'tauc']*Adhesive.loc[Coh_mat,'tauc']/(2*Adhesive.loc[Coh_mat,'GIIc'])
     return Adhesive
-
-def WriteToExcel(MPB,Direc,n_Nodes,n_Elements,txt_Reason,txt_Comments):
-    writer = pd.ExcelWriter('Models.xlsx', engine='xlsxwriter')
-    columns = ['Cohesives','trilinear','n Elements','n Nodes','Specimen length','Specimen width',\
-               'thickness skin','thickness stringer','Sx','Sy','Lx','Ly','Why model','Comments'\
-                   ,'Global mesh size','Cohesive mesh size','Gc','Gc_tri']
-    data =  [Coh_mat if Coh else '',Coh_Tri if superpose else '',n_Elements,n_Nodes,\
-            sk_L,sk_W,Thickness['Skin'],Thickness['Stringer'],Sup_X,Sup_Y,Load_X,Load_Y,txt_Reason,txt_Comments,\
-                Mesh_glo,Mesh_fla,Adhesive.loc[Coh_mat]  if Coh else '','' if not superpose else Adhesive.loc[Coh_Tri] ]
-     # Create empty dataframe to be filled with the version, error and variables
-    
-    try: 
-        Df_Excel = pd.read_excel('Models.xlsx', sheet_name= MPB)
-        Df_Excel.loc[MPB+'-'+Direc] = data
-    except:
-        print('Initiate new excel sheet')
-        Df_Excel = pd.DataFrame(data = np.array(data).reshape((1,-1)),columns = columns,index = [MPB+'-'+Direc])
-    Df_Excel.to_excel(writer, sheet_name= MPB) #, index=False
-
-    # workbook  = writer.book ; worksheet = writer.sheets[MPB]
-    # # Apply a conditional format to the cell range.
-    # worksheet.conditional_format('B2:B{}'.format(Version+1), {'type': '3_color_scale','min_color': "green",'mid_color': "yellow", 'max_color': "red"})
-    # # Add some cell formats.
-    # format1 = workbook.add_format({'num_format': '#,##0'})
-    # format2 = workbook.add_format({'num_format': '0.00'})
-    
-    # # Set the column width and format.
-    # worksheet.set_column('B:B', None, format1)
-    # # Set the format but not the column width.
-    # worksheet.set_column('G:G', None, format2)
-    writer.save()
     
