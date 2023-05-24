@@ -6,7 +6,7 @@ Developed for the PhD Thesis at TUDelft supervised by Prof.dr. C. Bisagni and Pr
 """
 import numpy as np
 import pandas as pd
-from BasicFunctions import GetMM
+from BasicFunctions import GetMM,RecalcFlangeMesh
 
 #Variables
 
@@ -181,28 +181,24 @@ else: Str_Loc = np.array([sk_W/2])
 # Lamina properties
 LamName = ['IM7/977-3','New']
 LamData = [[1.7E-9, 164000., 8980., .32,  .45, 5010., 5010., 3000., 0.128],\
-           [0.0E-9, 66000., 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+           [0.0E-9, 0., 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
     
 Lamina = pd.DataFrame(data = LamData, index = LamName, \
             columns = ['density','E1','E2','v12','v23','G12','G13','G23','t'])
     
 if Coh:
-    ## adhesive properties
-    AdhName = ['Gclay','G0','GSS'] 
-    AdhData = [[1.7E-9, 0.256, 0.65,  78.9, 99.4, 4.76E5, 2.07],\
-               [1.7E-9, 0.26,  1.19,  78.9, 99.4, 4.76E5, 2.77],\
-               [1.7E-9, 0.64,  1.29,  78.9, 99.4, 4.76E5, 3.33]] 
+    ## adhesive properties Gclay is taken from  S. B. Clay and P. M. Knoth. Experimental results of quasi-static testing for calibration and validation of composite progressive damage analysis methods:. Journal of Composite Materials, 51(10):1333–1353, 2016.
+    # The other properties are determined as part of the PhD and presented in the accompanied thesis.
+    AdhName = ['Gclay','G0','GSS','GSSc','GSS0','GII0']
+    AdhData = [[1.7E-9, 0.256, 0.65, 78.9, 99.4, 4.76E5, 2.07],\
+               [1.7E-9, 0.26,  1.19, 78.9, 99.4, 4.76E5, 2.77],\
+               [1.7E-9, 0.64,  1.29, 78.9, 99.4, 4.76E5, 3.33],\
+               [1.7E-9, 0.384, 0.64, 0.7,  0.60, 44,     5.67],\
+               [1.7E-9, 0.38,  0.10, 0.7,  0.05, 2.11,   1.6 ],\
+               [1.7E-9, 0.38,  0.10, 0.7,  33.0, 5.55E3, 1.65])
     Adhesive = pd.DataFrame(data = AdhData, index = AdhName, \
                 columns = ['density','GIc','GIIc','sigc','tauc','KI','etaBK'])
-        
-
-    if superpose: 
-        sigc2 = 0.7  # Secondary mode I strength
-        Gss = np.array([0.64,0.66,0.62,0.93,1.29])
-        BK_MM = np.array([0,0.2,0.44,0.76,1])
-
-        Adhesive = CalculateTauc2(Adhesive,sigc2,Coh_mat,Coh_Tri,Gss,BK_MM) 
-
+    # The shear strength is calculated such that for all cohesive models they are thermodynamically consistent:    
     Adhesive.loc[Coh_mat,'Ksh'] = int(Adhesive.loc[Coh_mat,'KI']*(Adhesive.loc[Coh_mat,'GIc']/Adhesive.loc[Coh_mat,'GIIc'])*(Adhesive.loc[Coh_mat,'tauc']/Adhesive.loc[Coh_mat,'sigc'])**2)
 
 
@@ -219,28 +215,28 @@ for Part in Material: Thickness[Part] = len(Layup[Part]) *Lamina.loc[Material[Pa
 # Loading time parameters
 if MPB=='MMB':    c = GetMM(MM,MMB_Yup,Precrack,Lamina,Material,Layup,Thickness)
 
-Disp = {'DCB':20,'3PB':-12,'4PB':-12,'7PB':-20,'FSP':-4,'SSCS':-4,'Test':-45} 
+Disp = {'DCB':20,'3PB':-12,'4PB':-12,'7PB':-20,'FSP':-4,'SSCS':-4,'Test':-45}  #final displacment.
 Disp = Disp[MPB] if MPB in Disp.keys() else -20
-Loadspeed = 4
-tend = np.abs(Disp)/Loadspeed # 0.4
-inc  = 10000
-t0   = 1e-4*tend if Coh else 0.01*tend
-tmin = 1e-10
-tmax = (0.1 if MPB=='FSP' else 0.1)/Loadspeed
-if sk_L<=2: tmax= t0*5
-LineSearch = True ; FieldDisplacement = True; RunTemp = True
+Loadspeed = 4 # mm/s, make sure it can be considered quasi-static
+tend = np.abs(Disp)/Loadspeed # End time of the step
+inc  = 10000 # max number of increments
+t0   = 1e-4*tend if Coh else 0.01*tend # first increment size
+tmin = 1e-10 # minimum increment size
+tmax = (0.1 if MPB=='FSP' else 0.1)/Loadspeed #max increment size
+
+LineSearch = True ; FieldDisplacement = True
 TimeIncrements = False if Shape=='Coupon' else True
 
-FieldFreq = 1 if (Shape=='Coupon' or not Coh) else 5 
-Energy = True ; Strain =True
+FieldFreq = 1 if (Shape=='Coupon' or not Coh) else 5 # an output frame per how many steps?
+Energy = True ; Strain =True #have energy and strain defaults as output?
 
     
 #Cohesive Zone
-Visc  = 1E-5*tend  # 1.0E-7
-if MPB=='FSP' :  L_Coh = 0.2
-elif MPB=='4PB': L_Coh = 0.05 
+Visc  = 1E-5*tend  # viscoelastic stabilization
+if MPB=='FSP' :  L_Coh = 0.2 # L_Coh times total length (Sk_L) defines the inital part that hsa no cohesive elements. Here for model reduction
+elif MPB=='4PB': L_Coh = 0.05 # Here to simulate clamp like conditions
 else:  L_Coh = 0
-Inserts = {} #'Stringer0':{'Right':{'X':sk_L/2,'len':20}}}
+Inserts = {} #inserts can be placed, multiple in each stringer by defining the following 'Stringer0':{'Right':{'X':sk_L/2,'len':20}}}
 
 
 
@@ -253,23 +249,19 @@ else: Spacing =  Mesh_fla
 MeshDiv = int(np.round(np.log(Mesh_glo/Mesh_fla)/np.log(3)))
 if Shape !='Hat' or MeshDiv == 0: Remeshing = False
 
-
-ElPlyDrop = 1
-if Plydrop!=0:
-    if Plydrop>Mesh_fla:    
-        while (Mesh_fla*1.2)*ElPlyDrop <Plydrop: ElPlyDrop += 1
-    elif Plydrop<Mesh_fla:
-        for ElPlyDrop in range(1,len(Layup['Stringer'])):
-            if len(Layup['Stringer'])%ElPlyDrop!=0: continue
-            if (Mesh_fla/1.2)*(ElPlyDrop**-1) <=Plydrop: break
-        ElPlyDrop*=-1
-    Mesh_fla = Plydrop/(abs(ElPlyDrop)**int(np.sign(ElPlyDrop)))
+if Plydrop!=0: #sligthly changes the mesh size to match with how the plies are dropped. 
+    Mesh_fla,ElPlyDrop = RecalcFlangeMesh(Plydrop,Mesh_fla,Layup):
+    
     
 print(f'Mesh flange size is: {Mesh_fla}')
 FlangeTermination = (sk_W/(2-((Shape=='Doubler' and MPB=='4PB')or Shape=='Coupon'))-str_HalfWidth)
 InnerCorner = str_Wfla-radius/(np.tan((np.pi-str_ang*np.pi/180.)/2)) if Shape=='Hat' else str_Wfla
 
-
+# the following calculates the 1D mesh, in X and Y separately. regi is always 1 longer than size. if regi is [0,sk_L/2] and size = [mesh_glo], the global mesh size is applied in the region between 0 to half the skin length.
+# the mesh is always symmetric with respect to the mid-plane in x-direction and in y, except for coupon and some doublers which only have one symmetry plane
+# Some things: there are transition zones defines, often the average of the global mesh size and the flange mesh size.
+# there is also a finer mesh applied to the location where the indenters are placed.
+               
 Mesh_ind = 0.5 if Coh else 0.5
 if MPB=='3PB' or Shape=='Coupon':
     MeshX_regi = np.array([0.0, sk_L/2])
