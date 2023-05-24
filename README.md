@@ -4,7 +4,7 @@ This mesher is created by Luc Kootte for his dissertation which can be found at:
 Some background information can be found in chapter 2, Methodology.
 
 ___
-Use:
+#Use:
 Download and unzip the files on your computer.
 The model design is defined in the file: InputVariables.py (The current variables correspond to the ones used within the thesis.)
 After the variables are defined, run the MainMesher.py.
