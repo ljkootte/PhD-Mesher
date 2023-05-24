@@ -195,7 +195,7 @@ if Coh:
                [1.7E-9, 0.64,  1.29, 78.9, 99.4, 4.76E5, 3.33],\
                [1.7E-9, 0.384, 0.64, 0.7,  0.60, 44,     5.67],\
                [1.7E-9, 0.38,  0.10, 0.7,  0.05, 2.11,   1.6 ],\
-               [1.7E-9, 0.38,  0.10, 0.7,  33.0, 5.55E3, 1.65])
+               [1.7E-9, 0.38,  0.10, 0.7,  33.0, 5.55E3, 1.65]]
     Adhesive = pd.DataFrame(data = AdhData, index = AdhName, \
                 columns = ['density','GIc','GIIc','sigc','tauc','KI','etaBK'])
     # The shear strength is calculated such that for all cohesive models they are thermodynamically consistent:    
@@ -250,7 +250,7 @@ MeshDiv = int(np.round(np.log(Mesh_glo/Mesh_fla)/np.log(3)))
 if Shape !='Hat' or MeshDiv == 0: Remeshing = False
 
 if Plydrop!=0: #sligthly changes the mesh size to match with how the plies are dropped. 
-    Mesh_fla,ElPlyDrop = RecalcFlangeMesh(Plydrop,Mesh_fla,Layup):
+    Mesh_fla,ElPlyDrop = RecalcFlangeMesh(Plydrop,Mesh_fla,Layup)
     
     
 print(f'Mesh flange size is: {Mesh_fla}')
