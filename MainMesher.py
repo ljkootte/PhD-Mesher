@@ -11,7 +11,6 @@ from CreateElements import WriteNdEl
 from Supports import WriteSupports,WritePanelClamp,WriteTestClamp
 import os
 import pandas as pd
-from WriteBatch import WriteBatchFile
 import time
 
 global enter
