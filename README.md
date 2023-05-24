@@ -1,5 +1,4 @@
 # PhD-Mesher
-========
 This mesher is created by Luc Kootte for his dissertation which can be found at:
 Some background information can be found in chapter 2, Methodology.
 
