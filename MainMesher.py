@@ -2,9 +2,9 @@
 """
 @author: L.J. Kootte
 @email: luckootte@gmail.com
-Developed for the PhD Thesis at TUDelft supervised by Prof. Chiara Bisagni and Prof. Christos Kassapoglou
-
+Developed for the PhD Thesis at TUDelft supervised by Prof.dr. C. Bisagni and Prof.dr. C. Kassapoglou
 """
+
 from InputVariables import *
 from Writer import WriteLayup,WriteMaterials,WriteSupsFile
 from CreateElements import WriteNdEl
@@ -62,36 +62,9 @@ n_Elements = sum([len(Df_El[key]) for key in Df_El.keys()])
 print(f'Nodes: {n_Nodes}')
 print(f'Elements: {n_Elements}')
 
-# WriteToExcel(MPB,Direc,n_Nodes,n_Elements,txt_Reason,txt_Comments)
-
-# for file in [file for file in os.listdir() if file.endswith(".rec")]: os.remove(file)
-
 if input('open Abaqus? (y/n):')=='y':
     os.popen('abaqus cae script=OpenAbaqus.py -- {0}-{1}\{0}-{1}.inp'.format(MPB,Direc))
 
-import shutil
-try:
-    shutil.copyfile('../SubPython.txt',MPB+'-'+Direc+'/SubPython.txt')
-except:
-    next
-
-from FTPtransfer import RunCluster,GetClusterCoreUsage,GetAbaqusLicenses,GetSFTP,Plotsta
-try:
-    if not shell.get_transport().is_active():     ssh,shell,sftp =  GetSFTP()
-except:
-    ssh,shell,sftp =  GetSFTP()
-
-try:
-    Df_Cluster,Cpu_avail1  = GetClusterCoreUsage(ssh)
-    Df_Licenses,Cpu_avail2 = GetAbaqusLicenses(ssh)
-    
-    if (1+3*Coh)<=min(Cpu_avail1,Cpu_avail2)<=cpu: cpu = min(Cpu_avail1,Cpu_avail2)
-except: next
-WriteBatchFile(MPB,Direc,cpu,mem,Solver,Coh,SubRoutine,RunTemp)
-print('Batch File Written')
-
-Filename = RunCluster(MPB+'-'+Direc,"Sub{}.txt".format(Direc),sftp,ssh)
-Plotsta(sftp,Filename,tend)
 
 
 
