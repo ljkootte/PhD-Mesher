@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Apr  8 14:08:53 2018
-
-@author: luuki
+@author: L.J. Kootte
+@email: luckootte@gmail.com
+Developed for the PhD Thesis at TUDelft supervised by Prof.dr. C. Bisagni and Prof.dr. C. Kassapoglou
 """
 import os
 from InputVariables import *
