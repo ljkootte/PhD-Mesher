@@ -12,6 +12,14 @@ It is then asked if you would like to open it directly in Abaqus to view the mod
 
 The three input files should be kept together. To submit the model simply use: abaqus job=<main-InputFileName>
   
+Citing this Python Mesher
+---------------------------------------
+
+We kindly ask you to cite this Python library properly.
+Also, it would be helpful if you could cite the dissertation where this methods has been applied as well.
+
+<to be added>
+  
 
 
 
