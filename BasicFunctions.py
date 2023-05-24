@@ -70,29 +70,15 @@ def GetMM(MM,MMB_Yup,Precrack,Lamina,Material,Layup,Thickness):
     c = (12*Beta**2+3*alpha+8*Beta*np.sqrt(3*alpha))/(36*Beta**2-3*alpha)*MMB_Yup 
     return c
 
-def CalculateTauc2(Adhesive,sigc2,Coh_mat,Coh_Tri,Gss,BK_MM) :
-    from scipy.optimize import curve_fit
-        
-    
-    Adhesive.loc[Coh_Tri,'GIc'] = Adhesive.loc[Coh_Tri,'GIc']-Adhesive.loc[Coh_mat,'GIc']
-    Adhesive.loc[Coh_Tri,'GIIc'] = Adhesive.loc[Coh_Tri,'GIIc']-Adhesive.loc[Coh_mat,'GIIc']
-
-    BK = lambda M,eta:  Adhesive.loc[Coh_mat,'GIc']+(Adhesive.loc[Coh_mat,'GIIc']-Adhesive.loc[Coh_mat,'GIc'])*M**Adhesive.loc[Coh_mat,'etaBK']+ \
-        Adhesive.loc[Coh_Tri,'GIc']+(Adhesive.loc[Coh_Tri,'GIIc']-Adhesive.loc[Coh_Tri,'GIc'])*M**eta
-    Adhesive.loc[Coh_Tri,'etaBK'] = curve_fit(BK,xdata=BK_MM,ydata=Gss)[0][0]
-
-    
-    Adhesive.loc[Coh_Tri,'sigc'] = sigc2
-    
-    Adhesive.loc[Coh_Tri,'KI'] = Adhesive.loc[Coh_Tri,'sigc']*Adhesive.loc[Coh_mat,'sigc']/(2*Adhesive.loc[Coh_mat,'GIc'])
-
-    tauc2 = Adhesive.loc[Coh_Tri,'tauc']*(sigc2/Adhesive.loc[Coh_Tri,'sigc'])*(Adhesive.loc[Coh_Tri,'GIIc']/Adhesive.loc[Coh_mat,'GIIc'])\
-        *(Adhesive.loc[Coh_mat,'GIc']/Adhesive.loc[Coh_Tri,'GIc'])
-    
-        
-    print('tauc2 = ',tauc2)
-
-    Adhesive.loc[Coh_Tri,'tauc'] = tauc2
-    Adhesive.loc[Coh_Tri,'Ksh'] = Adhesive.loc[Coh_Tri,'tauc']*Adhesive.loc[Coh_mat,'tauc']/(2*Adhesive.loc[Coh_mat,'GIIc'])
-    return Adhesive
-    
+def RecalcFlangeMesh(Plydrop,Mesh_fla,Layup):
+               
+    ElPlyDrop =  1 #this value should be one and is recalculate in the part below.
+    if Plydrop>Mesh_fla:    
+        while (Mesh_fla*1.2)*ElPlyDrop <Plydrop: ElPlyDrop += 1
+    elif Plydrop<Mesh_fla:
+        for ElPlyDrop in range(1,len(Layup['Stringer'])):
+            if len(Layup['Stringer'])%ElPlyDrop!=0: continue
+            if (Mesh_fla/1.2)*(ElPlyDrop**-1) <=Plydrop: break
+        ElPlyDrop*=-1
+    Mesh_fla = Plydrop/(abs(ElPlyDrop)**int(np.sign(ElPlyDrop)))
+    return Mesh_fla, ElPlyDrop
