@@ -9,9 +9,7 @@ from InputVariables import *
 import pandas as pd
 import numpy as np
 from CohTie import WriteSet
-#from CreateElements import MeshgridSolid,WriteNative,CreateElements,CreateGrid,CreateNodeDf
 import matplotlib.pyplot as plt
-from collections import defaultdict
 
 def DefMPB(Parts):
     global Z_str
