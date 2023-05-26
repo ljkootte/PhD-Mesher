@@ -10,41 +10,36 @@ from BasicFunctions import GetMM,RecalcFlangeMesh
 
 #Variables
 
-MPB = '3PB';  # 3PB, 4PB, 6PB, 7PB, SSCS, DCB, MMB, FSP, Test #ENF is 3PB+Coupon, ECT = 4PB + Coupon. 4PB actually means four-point twisting.
-Shape = 'Doubler' #Hat, Doubler, Coupon, Plate
-ElType   = 'SC8R' 
-Str_Lay = 'Thick' 
-Sk_Lay = 'Thin'
-Coh = True; superpose = True 
-Coh_mat = 'G0' ; Coh_Tri = 'GSS'
-cpu = 32 if Coh else 4 ; mem =  None # number of cores and gb ram
+MPB = '3PB';                  # 3PB, 4PB, 6PB, 7PB, SSCS, DCB, MMB, FSP, Test #ENF is 3PB+Coupon, ECT = 4PB + Coupon. 4PB actually means four-point twisting.
+Shape = 'Hat'                 # Hat, Doubler, Coupon, Plate
+Coh = True                    # if True, cohesive elements are added, if False not
+Coh_mat = 'G0'                # if Coh=True, select here the name of the cohesive material, which is alter defined with the properties
+superpose = True              # If True, superpose a second set of cohesive elements onto the first on the model R-curve effects, the second set follow the properties of Coh_Tri
+Coh_Tri = 'GSS0'              # if superpose=True, select here the name of the cohesive material, which is alter defined with the properties
 
-Mesh_glo = 2.0 #global mesh size, not where the cohesive elements are.
-if not Coh: El_Edge = 0.3
-ttt = {'Skin':1,'Stringer':1} #elements through-the-thickness, number of plies in the laminate must be divisible by this number (aka 12 plies, ttt can be 1/2/3/4/6/12)
+
+Mesh_glo = 2.0                # global mesh size, not where the cohesive elements are.
+if not Coh: El_Edge = 0.3     # element size of the elements on the edge of the stringer flange only, this refinement can help in the analytical calculation of the criterion for skin-stringer separation, chapter 4 in the dissertation
+ttt = {'Skin':1,'Stringer':1} # elements through-the-thickness, number of plies in the laminate must be divisible by this number (aka 12 plies, ttt can be 1/2/3/4/6/12)
 
 if Shape=='Coupon':
     Mesh_fla = 0.1 # mesh of the flange.
-    ttt['Stringer'] = ttt['Skin']
+    ttt['Stringer'] = ttt['Skin'] # number of elements through the thickness should be equal in this code when doing coupon analyses
 else:  
-    Mesh_fla = 0.3 if Coh else Mesh_glo
+    Mesh_fla = 0.3 if Coh else Mesh_glo # Mesh of the flange, calculate the minimum element length to have 3-5 cohesive elements in the fracture processing zone
 
-Plydrop = 0.#  # drop a ply every x mm to create a taper, needs to be zero for large mesh size combined with element through-the-thickness.
+Plydrop = 0.#  # drop a ply every x mm to create a taper at the flange edge, needs to be zero for large mesh size combined with element through-the-thickness.
 
+
+#__________
+# In the following only the variables corresponding to your test configuration are important.
 
 if MPB == '7PB':
     sk_W    = 254  # Skin width 
-    # sk_L    = 180  # Skin length
-    if Str_Lay=='Thin':    
-        sk_L    = 180  # Skin length
-        Sup_X   = 20   # mm from bottom side
-        Sup_Y   = 20   # mm from right side
-        Load_Y  = 34   # mm from bottom side
-    elif Str_Lay=='Thick': 
-        sk_L    = 140  # Skin length
-        Sup_X   = 24   # mm from bottom side
-        Sup_Y   = 36   # mm from right side
-        Load_Y  = 36   # mm from bottom side
+    sk_L    = 140  # Skin length
+    Sup_X   = 24   # mm from bottom side
+    Sup_Y   = 36   # mm from right side
+    Load_Y  = 36   # mm from bottom side
     Load_X  = None # mm from bottom
     ind_ra  = 12.5 ; ind_L = 4
     Surf_sq = ind_ra # mm square around the loading and support points for interaction 
@@ -62,17 +57,10 @@ elif MPB == 'SSCS':
     sk_L    = 240  # Skin length
 
 elif MPB == '4PB':
-    if Shape == 'Doubler': sk_W = 127
-    elif Shape == 'Hat':   sk_W = 254
-    else: sk_W = 220
-    if Str_Lay=='Thin':    
-        sk_L    = 140  # Skin length
-        Sup_X   = 44   # mm from right side  
-        Sup_Y   = 50   # mm from bottom side
-    elif Str_Lay=='Thick': 
-        sk_L    = 120  # Skin length
-        Sup_X   = 30   # mm from right side 
-        Sup_Y   = 27  # mm from bottom side
+    sk_W = 254
+    sk_L    = 140  # Skin length
+    Sup_X   = 44   # mm from right side  
+    Sup_Y   = 50   # mm from bottom side
     Load_X  = None # mm from bottom
     Load_Y  = None
     if Shape == 'Coupon': 
@@ -109,11 +97,11 @@ elif MPB=='DCB':
 elif MPB=='MMB':
     sk_W      = 125  # Skin width
     sk_L      = 25 # Skin length
-    Precrack  = 25
-    MMB_Ydown = sk_W - 25
-    MMB_Yup   = MMB_Ydown/2
+    Precrack  = 25 
+    MMB_Ydown = sk_W - 25 # location of lower roller in mmb
+    MMB_Yup   = MMB_Ydown/2 #location of upper roller in mmb
     R_circ = 3
-    MM = 0.76 #mode-mixity, in thesis after test corrections the values used were: 0.2, 0.44, 0.76
+    MM = 0.2 #mode-mixity, in thesis after test corrections the values used were: 0.2, 0.44, 0.76
 
 elif MPB=='FSP':
     sk_W    = 770  # Skin width
@@ -122,6 +110,7 @@ elif MPB=='FSP':
 elif MPB=='Test':
     sk_L    = 2  # Skin length
 
+#__________
    
     
 if MPB in ['4PB', '6PB', '7PB']: # indenter length and radius
@@ -131,26 +120,29 @@ if MPB in ['4PB', '6PB', '7PB']: # indenter length and radius
 elif MPB == '3PB':  Surf_sq = R_top*2   # mm square around the loading and support points for interaction  
 elif MPB == 'MMB':  Surf_sq = R_circ*2   # mm square around the loading and support points for interaction  
 
+  
+Material = {'Skin':'IM7/977-3','Stringer':'IM7/977-3'} # the name of the material, defined later in this document, that will be used for the skin and for the stringer
+Str_Lay = 'Thick'; Sk_Lay = 'Thin' #Here the actual used layup can be chosen from the database defined below
 
-Material = {'Skin':'IM7/977-3','Stringer':'IM7/977-3'}
 
-Sym = lambda lst,mid: lst+mid+lst[::-1] #make the layup symmetric
-if (MPB=='DCB' or MPB =='MMB' or (MPB=='3PB' and Shape=='Coupon')) and (Sk_Lay =='UD' or Str_Lay=='UD'): 
-    Layup    = {'Skin':[90]*12,'Stringer':[90]*12} #note the 90 degrees, to be consistent with the other specimen. with 90 the fibers are aligned in the direction of damage propagation.
-else:
-    Layup    = {'Skin':{'Thin':Sym([-45,45,0,90,-45,45],[]),\
-                            'Thick':Sym([-45,45,0,90,-45,45],[])*2}[Sk_Lay],\
-                'Stringer':{'Thin':Sym([-45,45,0,90,-45,45],[]),\
-                            'Thick':Sym([-45,45,0,90,-45,45],[])*2}[Str_Lay]}
+Sym = lambda lst,mid: lst+mid+lst[::-1] #a lambda function to make the layup symmetric, an additional center ply can be added
+#The Layup for the skin and stringer, as a database, 
+Layup    = {'Skin':{'Thin':Sym([-45,45,0,90,-45,45],[]),\
+                        'Thick':Sym([-45,45,0,90,-45,45],[])*2,\
+                            'UD':[90]*12)}[Sk_Lay],
+            'Stringer':{'Thin':Sym([-45,45,0,90,-45,45],[]),\
+                            'Thick':Sym([-45,45,0,90,-45,45],[])*2,\
+                                'UD':[90]*12)}[Str_Lay]}
 
-# STRINGER Geometry
+# STRINGER Geometry, find the shape that corresponds to the input Shape at the start of this file
+#___________
 if Shape =='Hat':
     str_Wfla = 27    # Stringer flange width
     str_Wtop = 30.6  # Stringer top width
     str_H    = 32.7  # Stringer heigth
     str_ang  = 70    # Stringer angle degrees
     str_HalfWidth = (str_Wfla+str_H/np.tan(str_ang*np.pi/180.))+str_Wtop/2 # half the width of the hat-stringer, dependent variable.
-    radius = 5
+    radius = 5       # Radius of both corners. 
     
 elif Shape=='Doubler':
     if MPB=='3PB':
@@ -169,13 +161,13 @@ elif Shape=='Coupon':
 elif Shape =='Plate':
     str_HalfWidth = 0
     str_Wfla = 0
+#_____
 
-
-
-if MPB=='FSP': Str_Loc = np.array([ 62.6, 273.6, 489.6, 700.6]) # Locations of the stringers on the four-stringer panel.
-elif Shape=='Coupon': Str_Loc = np.array([str_HalfWidth])
-elif Shape=='Doubler' and MPB == '4PB': Str_Loc = np.array([sk_W])
-else: Str_Loc = np.array([sk_W/2])
+# these are the stringer locations in mm calculated from the right edge to the center of the stringer. 
+if MPB=='FSP': Str_Loc = np.array([ 62.6, 273.6, 489.6, 700.6]) # number of inputs is the number of stringers, here for example four in total. 
+elif Shape=='Coupon': Str_Loc = np.array([str_HalfWidth]) # do not change this value
+elif Shape=='Doubler' and MPB == '4PB': Str_Loc = np.array([sk_W]) # do not change this value
+else: Str_Loc = np.array([sk_W/2]) # stringer is normally placed at the midst of the specimen, if you want to model some misalignment/assymetry you could change this.
 
 
 # Lamina properties
@@ -186,9 +178,17 @@ LamData = [[1.7E-9, 164000., 8980., .32,  .45, 5010., 5010., 3000., 0.128],\
 Lamina = pd.DataFrame(data = LamData, index = LamName, \
             columns = ['density','E1','E2','v12','v23','G12','G13','G23','t'])
     
-if Coh:
+if Coh: #only required when Coh=True aka cohesive elements are used. Both the normal and the superposed are defined here.
     ## adhesive properties Gclay is taken from  S. B. Clay and P. M. Knoth. Experimental results of quasi-static testing for calibration and validation of composite progressive damage analysis methods:. Journal of Composite Materials, 51(10):1333–1353, 2016.
     # The other properties are determined as part of the PhD and presented in the accompanied thesis.
+    
+#    LamColumns =            ['density',   'E1',  'E2','v12','v23', 'G12', 'G13', 'G23', 't']
+ #   LamData  = {'IM7/977-3':[  1.7E-9, 164000., 8980., 0.32, 0.45, 5010., 5010., 3000., 0.128],\
+  #                'New':[  0.0E-9, 66000.,    0.0,  0.0,  0.0,   0.0,   0.0,   0.0, 0.0]}
+ #   Lamina = pd.DataFrame.from_dict(data =LamData, columns = LamColumns, orient='index') # convert it to a database
+
+
+    
     AdhName = ['Gclay','G0','GSS','GSSc','GSS0','GII0']
     AdhData = [[1.7E-9, 0.256, 0.65, 78.9, 99.4, 4.76E5, 2.07],\
                [1.7E-9, 0.26,  1.19, 78.9, 99.4, 4.76E5, 2.77],\
@@ -198,6 +198,7 @@ if Coh:
                [1.7E-9, 0.38,  0.10, 0.7,  33.0, 5.55E3, 1.65]]
     Adhesive = pd.DataFrame(data = AdhData, index = AdhName, \
                 columns = ['density','GIc','GIIc','sigc','tauc','KI','etaBK'])
+    
     # The shear strength is calculated such that for all cohesive models they are thermodynamically consistent:    
     Adhesive.loc[Coh_mat,'Ksh'] = int(Adhesive.loc[Coh_mat,'KI']*(Adhesive.loc[Coh_mat,'GIc']/Adhesive.loc[Coh_mat,'GIIc'])*(Adhesive.loc[Coh_mat,'tauc']/Adhesive.loc[Coh_mat,'sigc'])**2)
 
